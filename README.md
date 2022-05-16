@@ -1,5 +1,6 @@
 Autor:				Mathias Koch // AdOptimize
 Date:					2022 May
+OS:						Windows with powershell
 Synopsis:			trigger local backup for files on
 							CHANGED
 							CREATED
