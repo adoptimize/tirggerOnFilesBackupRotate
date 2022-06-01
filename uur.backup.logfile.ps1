@@ -65,6 +65,18 @@ $_PID | Set-Content -Path $pidFile -ErrorAction SilentlyContinue
 								# Delete old ZIP files
 								Get-ChildItem -Path $localPath -Filter *.zip -file | Where-Object { !$_.PSIsContainer -and $_.CreationTime -lt $deleteDaysBack } | Remove-Item -Force -ErrorAction Continue
 
+								# equally sized files can be removed aswell . now what is equal :)
+								$files				= Get-ChildItem $localPath -File -Recurse -Include *.zip -ErrorAction SilentlyContinue | sort CreationTime | 
+																	Select-Object  FullName, @{Name='Size'; Expression={([string]([int]($_.Length / 1KB)))} } |
+																	Group-Object Size |
+																	Where-Object Count -GT 1
+								If ($files.count -gt 1)
+								{
+									$files.Size
+									$res	= $files | %{$_.Group[0].FullName}
+									Remove-Item -Force $res -ErrorAction Continue
+								}
+
 								# due to sync it might be possible to have doublicate files in folders.. we delete them
 								$duplicates 		= Get-ChildItem $localPath -File -Recurse -ErrorAction SilentlyContinue | 
 																		Get-FileHash | 
@@ -80,23 +92,13 @@ $_PID | Set-Content -Path $pidFile -ErrorAction SilentlyContinue
 				          Remove-Item -Force $result.Path
 								}
 
-								# equally sized files can be removed aswell . now what is equal :)
-								$files				= Get-ChildItem $localPath -File -Recurse -Include *.zip -ErrorAction SilentlyContinue | sort CreationTime | 
-																	Select-Object  FullName, @{Name='Size'; Expression={([string]([int]($_.Length / 1KB)))} } |
-																	Group-Object Size |
-																	Where-Object Count -GT 1
-								
-								If ($files.count -gt 1)
-								{
-									$res	= $files | %{$_.Group[0].FullName}
-									Remove-Item -Force $res -ErrorAction Continue
-								}
+
               }
 ### DECIDE WHICH EVENTS SHOULD BE WATCHED 
-    Register-ObjectEvent $watcher "Created" -Action $action
+    #Register-ObjectEvent $watcher "Created" -Action $action
     Register-ObjectEvent $watcher "Changed" -Action $action
-    Register-ObjectEvent $watcher "Renamed" -Action $action
+    #Register-ObjectEvent $watcher "Renamed" -Action $action
     #Register-ObjectEvent $watcher "Deleted" -Action $action
     while ($true) {
-			sleep 5
+			sleep 30 
 		}
